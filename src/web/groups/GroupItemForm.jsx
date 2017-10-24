@@ -13,9 +13,11 @@ import IPSelect from './IPSelect'
 const GroupItemForm = React.createClass({
   propTypes: {
     onSubmit: React.PropTypes.func.isRequired,
+    onDelete: React.PropTypes.func.isRequired,
     streamRule: React.PropTypes.object,
     streamRuleTypes: React.PropTypes.array.isRequired,
     title: React.PropTypes.string.isRequired,
+    streamRules: React.PropTypes.array.isRequired,
   },
   mixins: [LinkedStateMixin],
   getDefaultProps() {
@@ -32,10 +34,14 @@ const GroupItemForm = React.createClass({
     this.setState(this.props.streamRule);
   },
   _onSubmit() {
-    console.log("group items submitted!");
+    this.props.onDelete();
+    this.state.field = "HOSTIP";
     const ips = this.refs.ips.getValue().filter((value) => value !== '');
-    console.log(ips);
-    // this.props.onSubmit(this.props.streamRule.id, this.state);
+    for (let i = 0; i < ips.length; i++){
+      this.state.value = ips[i];
+      this.state.type = 1;
+      this.props.onSubmit(this.props.streamRule.id, this.state);
+    }
     this.refs.modal.close();
   },
   _formatStreamRuleType(streamRuleType) {
@@ -52,8 +58,14 @@ const GroupItemForm = React.createClass({
     this.refs.modal.close();
   },
   render() {
+    const streamRules = this.props.streamRules;
     const availableTags = [{name:"1.1.1.1"},{name:"2.2.2.2"},{name:"3.3.3.3"},{name:"3.3.3.4"},{name:"3.3.3.5"},{name:"3.3.3.6"},{name:"3.3.3.7"},{name:"3.3.3.8"}];
     const tags = [];
+
+    for (let i = 0; i < streamRules.length; i++){
+      tags.push(streamRules[i].value);
+    }
+
     return (
       <BootstrapModalForm ref="modal"
                           title={this.props.title}

@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react';
 import StreamThroughput from 'components/streams/StreamThroughput';
 import StreamControls from 'components/streams/StreamControls';
 import StreamStateBadge from 'components/streams/StreamStateBadge';
-import CollapsibleStreamRuleList from 'components/streamrules/CollapsibleStreamRuleList';
+import CollapsibleGroupItemList from './CollapsibleGroupItemList';
 import PermissionsMixin from 'util/PermissionsMixin';
 
 import StoreProvider from 'injection/StoreProvider';
@@ -55,7 +55,7 @@ const Group = React.createClass({
 
     return (
       <span>
-        Must match {verbalMatchingType} of the {stream.rules.length} configured stream{' '}
+        Must from {verbalMatchingType} of the {stream.rules.length} IPs{' '}
         <Pluralize value={stream.rules.length} plural="rules" singular="rule" />.
       </span>
     );
@@ -98,10 +98,13 @@ const Group = React.createClass({
   _onSaveStreamRule(streamRuleId, streamRule) {
     StreamRulesStore.create(this.props.stream.id, streamRule, () => UserNotification.success('Stream rule was created successfully.', 'Success'));
   },
+  _onDeleteStreamRulesByStreamId() {
+    StreamRulesStore.removeAll(this.props.stream.id, () => UserNotification.success('Stream rules was deleted successfully.', 'Success'));
+  },
   render() {
-    console.log(this.props);
     const stream = this.props.stream;
     const permissions = this.props.permissions;
+    const streamRules = this.props.stream.rules;
 
     const isDefaultStream = stream.is_default;
     const defaultStreamTooltip = isDefaultStream ?
@@ -115,6 +118,8 @@ const Group = React.createClass({
         <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
           <ManageGroupItemButton ref="manageGroupItemButton" bsStyle="info"
                                  onSaveStreamRule={this._onSaveStreamRule}
+                                 onDeleteStreamRule={this._onDeleteStreamRulesByStreamId}
+                                 streamRules={streamRules}
                                  streamRuleTypes={this.props.streamRuleTypes}/>
         </OverlayElement>
       );
@@ -155,7 +160,7 @@ const Group = React.createClass({
       <i className="fa fa-cube" title="Created from content pack" /> : null);
 
     const streamRuleList = isDefaultStream ? null :
-                           (<CollapsibleStreamRuleList key={`streamRules-${stream.id}`}
+                           (<CollapsibleGroupItemList key={`streamRules-${stream.id}`}
                                  stream={stream}
                                  streamRuleTypes={this.props.streamRuleTypes}
                                  permissions={this.props.permissions} />);

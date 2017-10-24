@@ -7,6 +7,8 @@ const ManageGroupItemButton = React.createClass({
     buttonText: React.PropTypes.string,
     bsStyle: React.PropTypes.string,
     onSaveStreamRule: React.PropTypes.func.isRequired,
+    onDeleteStreamRule: React.PropTypes.func.isRequired,
+    streamRules: React.PropTypes.array.isRequired,
   },
   getDefaultProps() {
     return {
@@ -15,6 +17,7 @@ const ManageGroupItemButton = React.createClass({
   },
   onClick() {
     this.refs.groupItemForm.open();
+    console.log("streamRuleId:",this.props.streamRule);
   },
   render() {
     return (
@@ -25,6 +28,8 @@ const ManageGroupItemButton = React.createClass({
         </Button>
         <GroupItemForm ref="groupItemForm" title="New Stream Rule"
                         onSubmit={this.props.onSaveStreamRule}
+                        onDelete={this.props.onDeleteStreamRule}
+                        streamRules={this.props.streamRules}
                         streamRuleTypes={this.props.streamRuleTypes} />
       </span>
     );

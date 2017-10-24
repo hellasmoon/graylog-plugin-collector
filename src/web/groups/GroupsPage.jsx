@@ -34,6 +34,7 @@ const GroupsPage = React.createClass({
   },
   _onSave(_, stream) {
     stream.title = "_Group:" + stream.title;
+    stream.matching_type = 'OR';
     console.log(stream);
     StreamsStore.save(stream, () => {
       UserNotification.success('Stream has been successfully created.', 'Success');
