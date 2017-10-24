@@ -1,47 +1,78 @@
 import React from 'react';
+import Reflux from 'reflux';
+import { Row, Col } from 'react-bootstrap';
 
-import { Row, Col, Button } from 'react-bootstrap';
-import { LinkContainer } from 'react-router-bootstrap';
+import CreateGroupButton from './CreateGroupButton';
+import GroupComponent from './GroupComponent';
+import DocumentationLink from 'components/support/DocumentationLink';
+import PageHeader from 'components/common/PageHeader';
+import { DocumentTitle, IfPermitted, Spinner } from 'components/common';
 
 import DocsHelper from 'util/DocsHelper';
-import DocumentationLink from 'components/support/DocumentationLink';
+import UserNotification from 'util/UserNotification';
 
-import { DocumentTitle, PageHeader } from 'components/common';
-import GroupList from './GroupsList';
+import StoreProvider from 'injection/StoreProvider';
+const CurrentUserStore = StoreProvider.getStore('CurrentUser');
+const StreamsStore = StoreProvider.getStore('Streams');
+const IndexSetsStore = StoreProvider.getStore('IndexSets');
 
-import Routes from 'routing/Routes';
+import ActionsProvider from 'injection/ActionsProvider';
+const IndexSetsActions = ActionsProvider.getActions('IndexSets');
 
-const ConfigurationsPage = React.createClass({
+const GroupsPage = React.createClass({
+  mixins: [Reflux.connect(CurrentUserStore), Reflux.connect(IndexSetsStore)],
+  getInitialState() {
+    return {
+      indexSets: undefined,
+    };
+  },
+  componentDidMount() {
+    IndexSetsActions.list(false);
+  },
+  _isLoading() {
+    return !this.state.currentUser || !this.state.indexSets;
+  },
+  _onSave(_, stream) {
+    stream.title = "_Group:" + stream.title;
+    console.log(stream);
+    StreamsStore.save(stream, () => {
+      UserNotification.success('Stream has been successfully created.', 'Success');
+    });
+  },
   render() {
+    if (this._isLoading()) {
+      return <Spinner />;
+    }
+
     return (
-      <DocumentTitle title="Log collector groups">
-        <span>
-          <PageHeader title="Log collector groups">
+      <DocumentTitle title="Groups">
+        <div>
+          <PageHeader title="Groups">
             <span>
-              Log collector groups
+              You can group incoming messages into groups by indicating group name and ip addresses.
+              A group contains several ip addresses.
             </span>
 
             <span>
-              Read more about the collector sidecar in the{' '}
-              <DocumentationLink page={DocsHelper.PAGES.COLLECTOR_SIDECAR} text="Graylog documentation" />.
+              Read more about groups in the <DocumentationLink page={DocsHelper.PAGES.STREAMS} text="documentation" />.
             </span>
 
-            <span>
-              <LinkContainer to={Routes.pluginRoute('SYSTEM_GROUPS')}>
-                <Button bsStyle="info">Overview</Button>
-              </LinkContainer>
-            </span>
+            <IfPermitted permissions="streams:create">
+              <CreateGroupButton ref="createStreamButton" bsSize="large" bsStyle="success" onSave={this._onSave}
+                                  indexSets={this.state.indexSets} />
+            </IfPermitted>
           </PageHeader>
 
           <Row className="content">
             <Col md={12}>
-              <GroupList />
+              <GroupComponent currentUser={this.state.currentUser} onStreamSave={this._onSave}
+                               indexSets={this.state.indexSets} />
             </Col>
           </Row>
-        </span>
+        </div>
       </DocumentTitle>
     );
   },
 });
 
-export default ConfigurationsPage;
+export default GroupsPage;
