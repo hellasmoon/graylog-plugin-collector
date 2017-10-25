@@ -45,7 +45,7 @@ const GroupForm = React.createClass({
     }
 
     return {
-      title: props.stream.title,
+      title: props.stream.title.substr(7),
       description: props.stream.description,
       remove_matches_from_default_stream: props.stream.remove_matches_from_default_stream,
       index_set_id: defaultIndexSetId,
@@ -55,10 +55,11 @@ const GroupForm = React.createClass({
   _onSubmit() {
     this.props.onSubmit(this.props.stream.id,
       {
-        title: this.state.title,
+        title: "_Group:"+this.state.title,
         description: this.state.description,
         remove_matches_from_default_stream: this.state.remove_matches_from_default_stream,
         index_set_id: this.state.index_set_id,
+        matching_type : 'OR',
       });
     this.refs.modal.close();
   },
@@ -97,7 +98,7 @@ const GroupForm = React.createClass({
     } else {
       indexSetSelect = <Spinner>Loading index sets...</Spinner>;
     }
-
+    console.log(this.state);
     return (
       <BootstrapModalForm ref="modal"
                           title={this.props.title}

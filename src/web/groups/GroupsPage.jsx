@@ -33,11 +33,8 @@ const GroupsPage = React.createClass({
     return !this.state.currentUser || !this.state.indexSets;
   },
   _onSave(_, stream) {
-    stream.title = "_Group:" + stream.title;
-    stream.matching_type = 'OR';
-    console.log(stream);
     StreamsStore.save(stream, () => {
-      UserNotification.success('Stream has been successfully created.', 'Success');
+      UserNotification.success('Group has been successfully created.', 'Success');
     });
   },
   render() {

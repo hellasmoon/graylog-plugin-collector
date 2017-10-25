@@ -43,20 +43,37 @@ const GroupItemForm = React.createClass({
     this.setState(this.props.streamRule);
   },
   _onSubmit() {
-    this.props.onDelete();
-    this.state.field = "HOSTIP";
     const ips = this.refs.ips.getValue().filter((value) => value !== '');
-    for (let i = 0; i < ips.length; i++){
-      this.state.value = ips[i];
-      this.state.type = 1;
-      const rule = {
-        field:this.state.field,
-        value:this.state.value,
-        type:this.state.type,
-        description:"",
-        inverted:false
-      };
-      this.props.onSubmit(this.props.streamRule.id, rule);
+    const streamRules = this.props.streamRules;
+    const tags = [];
+    for (let i = 0; i < streamRules.length; i++){
+      tags.push(streamRules[i].value);
+    }
+
+    let difference = ips.concat(tags).filter(v => !ips.includes(v) || !tags.includes(v));
+    let to_add =  ips.concat(tags).filter(v => !ips.includes(v) || !tags.includes(v)).filter(v => !tags.includes(v));
+    let to_del =  ips.concat(tags).filter(v => !ips.includes(v) || !tags.includes(v)).filter(v => !ips.includes(v));
+
+    let toDeleteStreamRule = streamRules.filter(v => to_del.includes(v.value));
+
+    if (difference.length > 0){
+      if (toDeleteStreamRule.length > 0){
+        for (let i = 0; i < toDeleteStreamRule.length; i++){
+          this.props.onDelete(toDeleteStreamRule[i].id);
+        }
+      }
+      if (to_add.length > 0){
+        for (let i = 0; i < to_add.length; i++){
+          const rule = {
+            field:"HOSTIP",
+            value:to_add[i],
+            type:1,
+            description:"",
+            inverted:false
+          };
+          this.props.onSubmit(this.props.streamRule.id, rule);
+        }
+      }
     }
     this.refs.modal.close();
   },

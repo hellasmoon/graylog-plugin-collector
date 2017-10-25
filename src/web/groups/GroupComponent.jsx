@@ -91,7 +91,7 @@ const GroupComponent = React.createClass({
 
       return (
         <Alert bsStyle="warning">
-          <i className="fa fa-info-circle" />&nbsp;No streams configured. {createStreamButton}
+          <i className="fa fa-info-circle" />&nbsp;No groups configured. {createStreamButton}
         </Alert>
       );
     }

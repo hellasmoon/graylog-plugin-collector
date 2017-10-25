@@ -14,7 +14,7 @@ const CreateGroupButton = React.createClass({
   getDefaultProps() {
     return {
       buttonText: 'Create Group',
-    };CreateGroupButton
+    };
   },
   onClick() {
     this.refs.groupForm.open();

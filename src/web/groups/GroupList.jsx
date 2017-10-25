@@ -21,7 +21,7 @@ const GroupList = React.createClass({
 
   _formatStream(stream) {
     if (stream.title.startsWith("_Group:")){
-      stream.title = stream.title.substr(7);
+      stream.title_shadow = stream.title.substr(7);
       return (
         <Group key={`stream-${stream.id}`} stream={stream} streamRuleTypes={this.props.streamRuleTypes}
                permissions={this.props.permissions} user={this.props.user} indexSets={this.props.indexSets} />

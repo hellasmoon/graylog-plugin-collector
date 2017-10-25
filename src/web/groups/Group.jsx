@@ -1,8 +1,8 @@
 import React, { PropTypes } from 'react';
 import StreamThroughput from 'components/streams/StreamThroughput';
-import StreamControls from 'components/streams/StreamControls';
+import GroupControls from './GroupControls';
 import StreamStateBadge from 'components/streams/StreamStateBadge';
-import CollapsibleGroupItemList from './CollapsibleGroupItemList';
+import CollapsibleStreamRuleList from './CollapsibleGroupItemList';
 import PermissionsMixin from 'util/PermissionsMixin';
 
 import StoreProvider from 'injection/StoreProvider';
@@ -61,9 +61,9 @@ const Group = React.createClass({
     );
   },
   _onDelete(stream) {
-    if (window.confirm('Do you really want to remove this stream?')) {
+    if (window.confirm('Do you really want to remove this group?')) {
       StreamsStore.remove(stream.id, (response) => {
-        UserNotification.success(`Stream '${stream.title}' was deleted successfully.`, 'Success');
+        UserNotification.success(`Group '${stream.title_shadow}' was deleted successfully.`, 'Success');
         return response;
       });
     }
@@ -75,18 +75,18 @@ const Group = React.createClass({
   },
   _onUpdate(streamId, stream) {
     StreamsStore.update(streamId, stream, (response) => {
-      UserNotification.success(`Stream '${stream.title}' was updated successfully.`, 'Success');
+      UserNotification.success(`Group '${stream.title_shadow}' was updated successfully.`, 'Success');
       return response;
     });
   },
   _onClone(streamId, stream) {
     StreamsStore.cloneStream(streamId, stream, (response) => {
-      UserNotification.success(`Stream was successfully cloned as '${stream.title}'.`, 'Success');
+      UserNotification.success(`Group was successfully cloned as '${stream.title_shadow}'.`, 'Success');
       return response;
     });
   },
   _onPause() {
-    if (window.confirm(`Do you really want to pause stream '${this.props.stream.title}'?`)) {
+    if (window.confirm(`Do you really want to pause group '${this.props.stream.title_shadow}'?`)) {
       this.setState({ loading: true });
       StreamsStore.pause(this.props.stream.id, response => response)
         .finally(() => this.setState({ loading: false }));
@@ -96,11 +96,15 @@ const Group = React.createClass({
     this.refs.quickAddStreamRuleForm.open();
   },
   _onSaveStreamRule(streamRuleId, streamRule) {
-    StreamRulesStore.create(this.props.stream.id, streamRule, () => UserNotification.success('Stream rule was created successfully.', 'Success'));
+    StreamRulesStore.create(this.props.stream.id, streamRule, () => UserNotification.success('Group item was created successfully.', 'Success'));
   },
   _onDeleteStreamRulesByStreamId() {
-    StreamRulesStore.removeAll(this.props.stream.id, () => UserNotification.success('Stream rules was deleted successfully.', 'Success'));
+    StreamRulesStore.removeAll(this.props.stream.id, () => UserNotification.success('Group items was deleted successfully.', 'Success'));
   },
+  _onDeleteStreamRulesByStreamRuleId(streamRuleId) {
+    StreamRulesStore.remove(this.props.stream.id, streamRuleId, () => UserNotification.success('Group items was deleted successfully.', 'Success'));
+  },
+
   render() {
     const stream = this.props.stream;
     const permissions = this.props.permissions;
@@ -118,7 +122,7 @@ const Group = React.createClass({
         <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
           <ManageGroupItemButton ref="manageGroupItemButton" bsStyle="info"
                                  onSaveStreamRule={this._onSaveStreamRule}
-                                 onDeleteStreamRule={this._onDeleteStreamRulesByStreamId}
+                                 onDeleteStreamRule={this._onDeleteStreamRulesByStreamRuleId}
                                  streamRules={streamRules}
                                  streamRuleTypes={this.props.streamRuleTypes}/>
         </OverlayElement>
@@ -140,7 +144,7 @@ const Group = React.createClass({
           <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
             <Button bsStyle="success" className="toggle-stream-button" onClick={this._onResume}
                     disabled={isDefaultStream || this.state.loading}>
-              {this.state.loading ? 'Starting...' : 'Start Stream'}
+              {this.state.loading ? 'Starting...' : 'Start Group'}
             </Button>
           </OverlayElement>
         );
@@ -149,7 +153,7 @@ const Group = React.createClass({
           <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
             <Button bsStyle="primary" className="toggle-stream-button" onClick={this._onPause}
                     disabled={isDefaultStream || this.state.loading}>
-              {this.state.loading ? 'Pausing...' : 'Pause Stream'}
+              {this.state.loading ? 'Pausing...' : 'Pause Group'}
             </Button>
           </OverlayElement>
         );
@@ -160,13 +164,13 @@ const Group = React.createClass({
       <i className="fa fa-cube" title="Created from content pack" /> : null);
 
     const streamRuleList = isDefaultStream ? null :
-                           (<CollapsibleGroupItemList key={`streamRules-${stream.id}`}
+                           (<CollapsibleStreamRuleList key={`streamRules-${stream.id}`}
                                  stream={stream}
                                  streamRuleTypes={this.props.streamRuleTypes}
                                  permissions={this.props.permissions} />);
     const streamControls = (
       <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
-        <StreamControls stream={stream} permissions={this.props.permissions}
+        <GroupControls stream={stream} permissions={this.props.permissions}
                         user={this.props.user}
                         onDelete={this._onDelete} onUpdate={this._onUpdate}
                         onClone={this._onClone}
@@ -191,7 +195,7 @@ const Group = React.createClass({
 
         <h2 className={style.streamTitle}>
           <LinkContainer to={Routes.stream_search(stream.id)}>
-            <a>{stream.title}</a>
+            <a>{stream.title_shadow}</a>
           </LinkContainer>
           {' '}
           <small>{indexSetDetails}<StreamStateBadge stream={stream} /></small>
