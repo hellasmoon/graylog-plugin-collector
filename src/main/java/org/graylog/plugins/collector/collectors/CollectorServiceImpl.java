@@ -42,6 +42,7 @@ public class CollectorServiceImpl implements CollectorService {
 
     private final JacksonDBCollection<CollectorImpl, String> coll;
     private final JacksonDBCollection<CollectorActions, String> collActions;
+    private final JacksonDBCollection<CollectorIP, String> collIP;
     private final Validator validator;
 
     @Inject
@@ -57,6 +58,7 @@ public class CollectorServiceImpl implements CollectorService {
         final String actionCollectionName = CollectorActions.class.getAnnotation(CollectionName.class).value();
         final DBCollection actionDbCollection = mongoConnection.getDatabase().getCollection(actionCollectionName);
         this.collActions = JacksonDBCollection.wrap(actionDbCollection, CollectorActions.class, String.class, mapperProvider.get());
+        this.collIP = JacksonDBCollection.wrap(dbCollection, CollectorIP.class, String.class, mapperProvider.get());
 
     }
 
@@ -138,6 +140,13 @@ public class CollectorServiceImpl implements CollectorService {
             updatedActions.add(action);
         }
         return CollectorActions.create(collectorActions.getId(), collectorId, DateTime.now(DateTimeZone.UTC), updatedActions);
+    }
+
+    @Override
+    public List<CollectorIP> findCollectorIps() {
+        BasicDBObject condition=new BasicDBObject();
+        BasicDBObject key=new BasicDBObject("node_details.ip",1);
+        return collIP.find(condition,key).toArray();
     }
 
     @Override

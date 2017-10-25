@@ -28,10 +28,7 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.graylog.plugins.collector.audit.CollectorAuditEventTypes;
-import org.graylog.plugins.collector.collectors.Collector;
-import org.graylog.plugins.collector.collectors.CollectorActions;
-import org.graylog.plugins.collector.collectors.CollectorService;
-import org.graylog.plugins.collector.collectors.Collectors;
+import org.graylog.plugins.collector.collectors.*;
 import org.graylog.plugins.collector.collectors.rest.models.CollectorAction;
 import org.graylog.plugins.collector.collectors.rest.models.requests.CollectorRegistrationRequest;
 import org.graylog.plugins.collector.collectors.rest.models.responses.CollectorList;
@@ -108,6 +105,20 @@ public class CollectorResource extends RestResource implements PluginRestResourc
         } else {
             throw new NotFoundException("Collector <" + collectorId + "> not found!");
         }
+    }
+
+    @GET
+    @Timed
+    @Path("/ips")
+    @ApiOperation(value = "Returns all collector ips")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "No collector ip exists")
+    })
+    @RequiresAuthentication
+    @RequiresPermissions(CollectorRestPermissions.COLLECTORS_READ)
+    public List<CollectorIP> getIPs() {
+        final List<CollectorIP> collectors = collectorService.findCollectorIps();
+        return collectors;
     }
 
     @GET

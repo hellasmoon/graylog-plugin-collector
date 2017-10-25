@@ -15,7 +15,13 @@ const GroupItemList = React.createClass({
 
   _formatStreamRules(streamRules) {
     if (streamRules && streamRules.length > 0) {
-      return streamRules.map((streamRule) => {
+      return streamRules.sort(function (a,b) {
+        if(a.value < b.value){
+          return -1;
+        }else {
+          return 1;
+        }
+      }).map((streamRule) => {
         return (
           <GroupItem key={streamRule.id} value={streamRule.value} />
         );

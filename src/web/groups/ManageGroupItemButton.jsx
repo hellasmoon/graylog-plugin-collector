@@ -17,7 +17,6 @@ const ManageGroupItemButton = React.createClass({
   },
   onClick() {
     this.refs.groupItemForm.open();
-    console.log("streamRuleId:",this.props.streamRule);
   },
   render() {
     return (

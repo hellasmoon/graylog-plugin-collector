@@ -1,11 +1,14 @@
 import React from 'react';
+import Reflux from 'reflux';
 import { Col } from 'react-bootstrap';
 import LinkedStateMixin from 'react-addons-linked-state-mixin';
 
 import { Input } from 'components/bootstrap';
 import BootstrapModalForm from 'components/bootstrap/BootstrapModalForm';
-import { TypeAheadFieldInput } from 'components/common';
+import { TypeAheadFieldInput, Spinner } from 'components/common';
 import { DocumentationLink } from 'components/support';
+import GroupsStore from './GroupsStore';
+import GroupsActions from './GroupsActions';
 
 import IPSelect from './IPSelect'
 
@@ -19,14 +22,20 @@ const GroupItemForm = React.createClass({
     title: React.PropTypes.string.isRequired,
     streamRules: React.PropTypes.array.isRequired,
   },
-  mixins: [LinkedStateMixin],
+  mixins: [LinkedStateMixin, Reflux.connect(GroupsStore)],
   getDefaultProps() {
     return {
       streamRule: { field: '', type: 1, value: '', inverted: false, description: '' },
     };
   },
   getInitialState() {
-    return this.props.streamRule;
+    return{
+      ips: undefined,
+      streamRule: this.props.streamRule,
+    };
+  },
+  componentDidMount() {
+    this._reloadIPs();
   },
   FIELD_PRESENCE_RULE_TYPE: 5,
   ALWAYS_MATCH_RULE_TYPE: 7,
@@ -40,7 +49,14 @@ const GroupItemForm = React.createClass({
     for (let i = 0; i < ips.length; i++){
       this.state.value = ips[i];
       this.state.type = 1;
-      this.props.onSubmit(this.props.streamRule.id, this.state);
+      const rule = {
+        field:this.state.field,
+        value:this.state.value,
+        type:this.state.type,
+        description:"",
+        inverted:false
+      };
+      this.props.onSubmit(this.props.streamRule.id, rule);
     }
     this.refs.modal.close();
   },
@@ -50,6 +66,12 @@ const GroupItemForm = React.createClass({
               value={streamRuleType.id}>{streamRuleType.short_desc}</option>
     );
   },
+  _reloadIPs() {
+    GroupsActions.getCollectorIps.triggerPromise();
+  },
+  _isLoading() {
+    return !this.state.ips;
+  },
   open() {
     this._resetValues();
     this.refs.modal.open();
@@ -58,8 +80,11 @@ const GroupItemForm = React.createClass({
     this.refs.modal.close();
   },
   render() {
+    if (this._isLoading()) {
+      return <Spinner />;
+    }
+    const ips = this.state.ips;
     const streamRules = this.props.streamRules;
-    const availableTags = [{name:"1.1.1.1"},{name:"2.2.2.2"},{name:"3.3.3.3"},{name:"3.3.3.4"},{name:"3.3.3.5"},{name:"3.3.3.6"},{name:"3.3.3.7"},{name:"3.3.3.8"}];
     const tags = [];
 
     for (let i = 0; i < streamRules.length; i++){
@@ -76,7 +101,7 @@ const GroupItemForm = React.createClass({
           <Col md={12}>
             <Input label="Group Items"
                    help="Select ip addresses belong to this group">
-              <IPSelect ref="ips" availableIPs={availableTags} ips={tags}
+              <IPSelect ref="ips" availableIPs={ips} ips={tags}
                           className="form-control" />
             </Input>
           </Col>
