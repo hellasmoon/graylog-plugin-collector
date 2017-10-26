@@ -98,7 +98,6 @@ const GroupForm = React.createClass({
     } else {
       indexSetSelect = <Spinner>Loading index sets...</Spinner>;
     }
-    console.log(this.state);
     return (
       <BootstrapModalForm ref="modal"
                           title={this.props.title}
