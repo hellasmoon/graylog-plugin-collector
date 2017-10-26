@@ -51,11 +51,14 @@ public class CollectorResourceTest extends RestResourceBaseTest {
 
     @Mock
     private org.graylog.plugins.collector.collectors.CollectorService collectorService;
+    private org.graylog2.streams.StreamService streamService;
+    private org.graylog2.streams.StreamRuleService streamRuleService;
+    private org.graylog2.indexer.IndexSetRegistry indexSetRegistry;
 
     @Before
     public void setUp() throws Exception {
         this.collectors = getDummyCollectorList();
-        this.resource = new CollectorResource(collectorService, new CollectorSystemConfigurationSupplier(CollectorSystemConfiguration.defaultConfiguration()));
+        this.resource = new CollectorResource(collectorService, new CollectorSystemConfigurationSupplier(CollectorSystemConfiguration.defaultConfiguration()), streamService, indexSetRegistry, streamRuleService);
         when(collectorService.all()).thenReturn(collectors);
     }
 
@@ -105,7 +108,7 @@ public class CollectorResourceTest extends RestResourceBaseTest {
 
     @Test
     public void testRegister() throws Exception {
-        final CollectorRegistrationRequest input = CollectorRegistrationRequest.create("nodeId", CollectorNodeDetailsSummary.create("DummyOS 1.0", null, null, null, null, null));
+        final CollectorRegistrationRequest input = CollectorRegistrationRequest.create("nodeId", CollectorNodeDetailsSummary.create("DummyOS 1.0", null, "10.1.1.1", null, null, null));
 
         final Response response = this.resource.register("collectorId", input, "0.0.1");
 

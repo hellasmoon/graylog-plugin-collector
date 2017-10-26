@@ -20,6 +20,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,6 +28,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.bson.types.ObjectId;
 import org.graylog.plugins.collector.audit.CollectorAuditEventTypes;
 import org.graylog.plugins.collector.collectors.*;
 import org.graylog.plugins.collector.collectors.rest.models.CollectorAction;
@@ -39,8 +41,19 @@ import org.graylog.plugins.collector.permissions.CollectorRestPermissions;
 import org.graylog.plugins.collector.system.CollectorSystemConfiguration;
 import org.graylog2.audit.jersey.AuditEvent;
 import org.graylog2.audit.jersey.NoAuditEvent;
+import org.graylog2.indexer.IndexSet;
+import org.graylog2.indexer.IndexSetRegistry;
+import org.graylog2.plugin.Tools;
+import org.graylog2.plugin.database.ValidationException;
 import org.graylog2.plugin.rest.PluginRestResource;
+import org.graylog2.plugin.streams.Stream;
+import org.graylog2.plugin.streams.StreamRule;
+import org.graylog2.plugin.streams.StreamRuleType;
 import org.graylog2.shared.rest.resources.RestResource;
+import org.graylog2.streams.StreamImpl;
+import org.graylog2.streams.StreamRuleImpl;
+import org.graylog2.streams.StreamRuleService;
+import org.graylog2.streams.StreamService;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
@@ -59,7 +72,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Api(value = "System/Collectors", description = "Management of Graylog Collectors.")
 @Path("/collectors")
@@ -69,12 +84,18 @@ public class CollectorResource extends RestResource implements PluginRestResourc
     private final CollectorService collectorService;
     private final LostCollectorFunction lostCollectorFunction;
     private final Supplier<CollectorSystemConfiguration> configSupplier;
+    private final StreamService streamService;
+    private final IndexSetRegistry indexSetRegistry;
+    private final StreamRuleService streamRuleService;
 
     @Inject
-    public CollectorResource(CollectorService collectorService, Supplier<CollectorSystemConfiguration> configSupplier) {
+    public CollectorResource(CollectorService collectorService, Supplier<CollectorSystemConfiguration> configSupplier, StreamService streamService, IndexSetRegistry indexSetRegistry, StreamRuleService streamRuleService) {
         this.collectorService = collectorService;
         this.lostCollectorFunction = new LostCollectorFunction(configSupplier.get().collectorInactiveThreshold());
         this.configSupplier = configSupplier;
+        this.streamService = streamService;
+        this.indexSetRegistry = indexSetRegistry;
+        this.streamRuleService = streamRuleService;
     }
 
     @GET
@@ -152,9 +173,45 @@ public class CollectorResource extends RestResource implements PluginRestResourc
                              @PathParam("collectorId") @NotEmpty String collectorId,
                              @ApiParam(name = "JSON body", required = true)
                              @Valid @NotNull CollectorRegistrationRequest request,
-                             @HeaderParam(value = "X-Graylog-Collector-Version") @NotEmpty String collectorVersion) {
+                             @HeaderParam(value = "X-Graylog-Collector-Version") @NotEmpty String collectorVersion) throws Exception {
         final Collector collector = collectorService.fromRequest(collectorId, request, collectorVersion);
         collectorService.save(collector);
+
+        String ip = collector.getNodeDetails().ip();
+
+        List<Stream> streams = streamService.loadByTitle("_IP:"+ip);
+
+        if (streams.isEmpty()){
+            ObjectId id = new ObjectId();
+
+            if (ip == null){
+                throw new Exception("ip is NULL when registering collector!");
+            }
+
+            final IndexSet indexSet = indexSetRegistry.getDefault();
+
+            final Map<String, Object> streamData = ImmutableMap.<String, Object>builder()
+                    .put(StreamImpl.FIELD_TITLE, "_IP:"+ip)
+                    .put(StreamImpl.FIELD_DESCRIPTION, ip)
+                    .put(StreamImpl.FIELD_DISABLED, false)
+                    .put(StreamImpl.FIELD_MATCHING_TYPE, StreamImpl.MatchingType.OR.name())
+                    .put(StreamImpl.FIELD_CREATOR_USER_ID, "system")
+                    .put(StreamImpl.FIELD_CREATED_AT, Tools.nowUTC())
+                    .put(StreamImpl.FIELD_DEFAULT_STREAM, false)
+                    .put(StreamImpl.FIELD_INDEX_SET_ID, indexSet.getConfig().id())
+                    .build();
+            final org.graylog2.plugin.streams.Stream stream = new StreamImpl(id, streamData, Collections.emptyList(), Collections.emptySet(), indexSet);
+
+            final String streamId = streamService.save(stream);
+            final Map<String, Object> streamRuleData = ImmutableMap.<String, Object>builder()
+                    .put(StreamRuleImpl.FIELD_TYPE, StreamRuleType.EXACT.getValue())
+                    .put(StreamRuleImpl.FIELD_VALUE, ip)
+                    .put(StreamRuleImpl.FIELD_FIELD, "HOSTIP")
+                    .put(StreamRuleImpl.FIELD_INVERTED, false)
+                    .put(StreamRuleImpl.FIELD_STREAM_ID, new ObjectId(streamId))
+                    .build();
+            streamRuleService.save(new StreamRuleImpl(streamRuleData));
+        }
 
         final CollectorActions collectorActions = collectorService.findActionByCollector(collectorId, true);
         List<CollectorAction> collectorAction = null;
