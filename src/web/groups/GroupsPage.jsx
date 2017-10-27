@@ -33,8 +33,10 @@ const GroupsPage = React.createClass({
     return !this.state.currentUser || !this.state.indexSets;
   },
   _onSave(_, stream) {
-    StreamsStore.save(stream, () => {
-      UserNotification.success('Group has been successfully created.', 'Success');
+    StreamsStore.save(stream, (response) => {
+      StreamsStore.resume(response.stream_id, () => {
+        UserNotification.success('Group has been successfully created.', 'Success');
+      });
     });
   },
   render() {
