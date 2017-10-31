@@ -240,9 +240,18 @@ const EditInputFields = React.createClass({
   },
 
   render() {
+    let prefix;
+    let verbatim;
     if (this.props.type) {
       switch (this.props.type) {
         case 'nxlog:file':
+          prefix = "Exec $HOSTIP = string(host_ip());";
+          verbatim = this.props.properties.verbatim;
+          if (!verbatim){
+            verbatim = prefix + "\n";
+          }else if (verbatim.indexOf(prefix) < 0){
+            verbatim = prefix + "\n" + verbatim;
+          }
           return (
             <div>
               <Input type="text"
@@ -310,10 +319,17 @@ const EditInputFields = React.createClass({
                                onChange={this._changeFields}/>
               </Input>
               <CollapsibleVerbatim type={this.props.type}
-                                   value={this.props.properties.verbatim}
+                                   value={verbatim}
                                    onChange={this._injectProperty}/>
             </div>);
         case 'nxlog:windows-event-log':
+          prefix = "Exec $HOSTIP = string(host_ip());";
+          verbatim = this.props.properties.verbatim;
+          if (!verbatim){
+            verbatim = prefix + "\n";
+          }else if (verbatim.indexOf(prefix) < 0){
+            verbatim = prefix + "\n" + verbatim;
+          }
           return (
               <div>
                 <Input type="text"
@@ -355,10 +371,20 @@ const EditInputFields = React.createClass({
                                  onChange={this._changeFields} />
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
-                                     value={this.props.properties.verbatim}
+                                     value={verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'nxlog:udp-syslog':
+          let prefix_ip = "Exec $HOSTIP = string(host_ip());";
+          let prefix_file = "Exec $FileName = \"syslog\";";
+          verbatim = this.props.properties.verbatim;
+          if (!verbatim){
+            verbatim = prefix_ip + "\n" + prefix_file + "\n";
+          }else if (verbatim.indexOf(prefix_ip) < 0){
+            verbatim = prefix_ip + "\n" + verbatim;
+          }else if (verbatim.indexOf(prefix_file) < 0){
+            verbatim = prefix_file + "\n" + verbatim;
+          }
           return (
               <div>
                 <Input type="text"
@@ -382,10 +408,20 @@ const EditInputFields = React.createClass({
                                  onChange={this._changeFields} />
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
-                                     value={this.props.properties.verbatim}
+                                     value={verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'nxlog:tcp-syslog':
+          let prefix_ip_t = "Exec $HOSTIP = string(host_ip());";
+          let prefix_file_t = "Exec $FileName = \"syslog\";";
+          verbatim = this.props.properties.verbatim;
+          if (!verbatim){
+            verbatim = prefix_ip_t + "\n" + prefix_file_t + "\n";
+          }else if (verbatim.indexOf(prefix_ip_t) < 0){
+            verbatim = prefix_ip_t + "\n" + verbatim;
+          }else if (verbatim.indexOf(prefix_file_t) < 0){
+            verbatim = prefix_file_t + "\n" + verbatim;
+          }
           return (
               <div>
                 <Input type="text"
@@ -409,7 +445,7 @@ const EditInputFields = React.createClass({
                                  onChange={this._changeFields} />
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
-                                     value={this.props.properties.verbatim}
+                                     value={verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'filebeat:file':
