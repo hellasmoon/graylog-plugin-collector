@@ -24,7 +24,7 @@ const CollectorConfiguration = React.createClass({
 
   getInitialState() {
     const outputs = {};
-    let initialTab = 'beat';
+    let initialTab = 'nxlog';
     outputs.beat = this.props.configuration.outputs.filter(key => key.backend === 'filebeat' || key.backend === 'winlogbeat').length;
     outputs.nxlog = this.props.configuration.outputs.filter(key => key.backend === 'nxlog').length;
 
@@ -240,6 +240,7 @@ const CollectorConfiguration = React.createClass({
       { group: 'nxlog', value: 'nxlog:gelf-udp', label: '[NXLog] GELF UDP output' },
       { group: 'nxlog', value: 'nxlog:gelf-tcp', label: '[NXLog] GELF TCP output' },
       { group: 'nxlog', value: 'nxlog:gelf-tcp-tls', label: '[NXLog] GELF TCP/TLS output' },
+      { group: 'nxlog', value: 'nxlog:gelf-kafka', label: '[NXLog] GELF Kafka output' },
       { group: 'beat', value: 'filebeat:logstash', label: '[FileBeat] Beats output' },
       { group: 'beat', value: 'winlogbeat:logstash', label: '[WinLogBeat] Beats output' },
     ];
@@ -318,7 +319,7 @@ const CollectorConfiguration = React.createClass({
                   activeKey={this.state.tab}
                   animation={false}
                   onSelect={this._tabSwitched}>
-              <Tab eventKey="beat" title="Beats"/>
+              {/*<Tab eventKey="beat" title="Beats"/>*/}
               <Tab eventKey="nxlog" title="NXLog"/>
             </Tabs>
 

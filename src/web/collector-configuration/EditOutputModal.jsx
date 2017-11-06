@@ -63,6 +63,39 @@ const EditOutputModal = React.createClass({
 
   _save() {
     const configuration = this.state;
+    var errorFields = this.state.errorFields.slice();
+    let brokerId=this._getId('gelf-kafka-brokers');
+    let compressId = this._getId("gelf-kafka-compression");
+
+    if (this.state.type == "gelf-kafka"){
+      if (!this.state.properties.brokers){
+        const index = errorFields.indexOf(brokerId);
+        if (index == -1){
+          errorFields.push(brokerId);
+        }
+        this.setState({error: true, errorMessage: "broker list must not be empty, please add at least one address", errorFields: errorFields});
+        return;
+      }else {
+        const index = errorFields.indexOf(brokerId);
+        if (index > -1) {
+          errorFields.splice(index, 1);
+        }
+      }
+      if (!this.state.properties.compression){
+        const index = errorFields.indexOf(compressId);
+        if (index == -1){
+          errorFields.push(compressId);
+        }
+        this.setState({error: true, errorMessage: "compression must not be empty, please chose one", errorFields: errorFields});
+        return;
+      }else {
+        const index = errorFields.indexOf(compressId);
+        if (index > -1) {
+          errorFields.splice(index, 1);
+        }
+      }
+      this.setState({error: false, errorMessage: "", errorFields: errorFields});
+    }
 
     if (!configuration.error) {
       this.props.saveOutput(configuration, this._saved);
@@ -78,6 +111,7 @@ const EditOutputModal = React.createClass({
     if (!error && index > -1) {
       errorFields.splice(index, 1);
     }
+    console.log(errorFields);
     this.setState({error: error, errorMessage: message, errorFields: errorFields});
   },
 
@@ -104,6 +138,10 @@ const EditOutputModal = React.createClass({
 
   _fieldError(name) {
     return this.state.error && this.state.errorFields.indexOf(this._getId(name)) !== -1;
+  },
+
+  _getId(prefixIdName) {
+    return prefixIdName + this.state.selectedType;
   },
 
   render() {
@@ -145,6 +183,8 @@ const EditOutputModal = React.createClass({
             </Input>
             <EditOutputFields type={this.state.selectedType} properties={this.state.properties}
                               injectProperties={this._injectProperties} errorState={this._changeErrorState}
+                              error={this.state.error}
+                              errorMessage={this.state.errorMessage}
                               errorFields={this.state.errorFields} />
           </fieldset>
         </BootstrapModalForm>

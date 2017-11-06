@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from 'components/bootstrap';
 
 import FormUtils from 'util/FormsUtils';
-import { KeyValueTable } from 'components/common';
+import { KeyValueTable, Select } from 'components/common';
 
 import CollapsibleVerbatim from './CollapsibleVerbatim';
 
@@ -13,6 +13,8 @@ const EditOutputFields = React.createClass({
     errorState: React.PropTypes.func,
     errorFields: React.PropTypes.array,
     injectProperties: React.PropTypes.func.isRequired,
+    error: React.PropTypes.bool,
+    errorMessage: React.PropTypes.string,
   },
 
   getDefaultProps() {
@@ -21,10 +23,19 @@ const EditOutputFields = React.createClass({
     };
   },
 
+  componentWillReceiveProps(newProps){
+    this.setState({
+      error: newProps.error,
+      errorMessage: newProps.errorMessage,
+    });
+  },
+
   getInitialState() {
     return {
       error: false,
       errorMessage: '',
+      compression: this.props.properties.compression,
+      brokers: this.props.properties.brokers,
     };
   },
 
@@ -103,7 +114,52 @@ const EditOutputFields = React.createClass({
     return this.state.error && this.props.errorFields.indexOf(this._getId(name)) !== -1;
   },
 
+  _changeCompression(compression) {
+    console.log("change compression!!!",event.target.id);
+    this.setState({compression:compression}, () => {
+      this.props.injectProperties("compression", compression);
+    });
+  },
+
+  _changeBrokers(fields){
+    let brokers = '';
+    for (let key in fields) {
+      let keyReg = /^((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]\d)|\d)(\.((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]\d)|\d)){3}$|^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/;
+      let valueReg = /^([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/;
+      let keyRe = new RegExp(keyReg);
+      let valueRe = new RegExp(valueReg);
+      if (!keyRe.test(key) || !valueRe.test(fields[key])){
+        this._changeErrorState(true, 'Invalid IP(domain) or Port. Check the format!', this._getId('gelf-kafka-brokers'));
+        return;
+      }else {
+        this._changeErrorState(false, '', this._getId('gelf-kafka-brokers'));
+      }
+      if (brokers == ''){
+        brokers += key+":"+fields[key];
+      }else {
+        brokers += ","+key+":"+fields[key];
+      }
+    }
+    this.setState({ brokers: brokers }, () => {
+      this.props.injectProperties('brokers', brokers);
+    });
+  },
+
   render() {
+    const brokerMap = {};
+    const brokers = this.state.brokers;
+    if(brokers){
+      const brokerList = brokers.split(",");
+      brokerList.map((broker) => {
+        let i = broker.indexOf(":");
+        if (i > 0){
+          let ip = ""+ broker.substr(0,i);
+          let port = "" + broker.substr(i+1, broker.length);
+          brokerMap[ip] = port;
+        }
+      });
+    }
+
     if (this.props) {
       switch (this.props.type) {
         case 'nxlog:gelf-udp':
@@ -147,6 +203,46 @@ const EditOutputFields = React.createClass({
                                      onChange={this._injectProperty}/>
               </div>);
             break;
+        case 'nxlog:gelf-kafka':
+          const headers = ['IP/Domain', 'Port', 'Actions'];
+          return (
+            <div>
+              <Input label="Broker List"
+                     bsStyle={this._fieldError('gelf-kafka-brokers') ? 'error' : null}
+                     help={this._fieldError('gelf-kafka-brokers') ? this.state.errorMessage: "The brokers' ip:port list of kafka."}
+                     >
+                <KeyValueTable pairs={brokerMap}
+                               id={this._getId('gelf-kafka-brokers')}
+                               editable={true}
+                               headers={headers}
+                               onChange={this._changeBrokers}/>
+              </Input>
+              <Input type="text"
+                     id={this._getId('gelf-kafka-topic')}
+                     label="Topic"
+                     value={this.props.properties.topic}
+                     onChange={this._injectProperty('topic')}
+                     help="The topic which logs will be produced to"
+                     required />
+              <Input id={this._getId('gelf-kafka-compression')}
+                     label="Compression"
+                     bsStyle={this._fieldError('gelf-kafka-compression') ? 'error' : null}
+                     help={this._fieldError('gelf-kafka-compression') ? this.state.errorMessage: "Choose the compression type."}
+                     >
+                <Select ref="select-type"
+                        options={[{value:"none", label:"none"}, {value:"gzip", label:"gzip"}, {value:"snappy", label:"snappy"}]}
+                        value={this.state.compression}
+                        onValueChange={this._changeCompression}
+                        placeholder="Choose compression type..."
+                        required
+                />
+              </Input>
+
+              <CollapsibleVerbatim type={this.props.type}
+                                   value={this.props.properties.verbatim}
+                                   onChange={this._injectProperty}/>
+            </div>);
+          break;
         case 'nxlog:gelf-tcp':
           return (
               <div>
