@@ -7,6 +7,7 @@ const CollapsibleVerbatim = React.createClass({
     type: React.PropTypes.string,
     value: React.PropTypes.string,
     onChange: React.PropTypes.func.isRequired,
+    injectProperties: React.PropTypes.func.isRequired,
   },
 
   getInitialState() {
@@ -17,6 +18,10 @@ const CollapsibleVerbatim = React.createClass({
     return {
       expanded: expanded,
     };
+  },
+
+  componentDidMount(){
+    this.props.injectProperties("verbatim",this.props.value);
   },
 
   _onHandleToggle(e) {

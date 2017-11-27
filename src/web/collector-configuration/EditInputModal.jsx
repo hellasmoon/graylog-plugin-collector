@@ -66,6 +66,8 @@ const EditInputModal = React.createClass({
   _save() {
     const configuration = this.state;
 
+    console.log("configuration: ",configuration);
+
     if (!configuration.error) {
       this.props.saveInput(configuration, this._saved);
     }

@@ -320,6 +320,7 @@ const EditInputFields = React.createClass({
               </Input>
               <CollapsibleVerbatim type={this.props.type}
                                    value={verbatim}
+                                   injectProperties={this.props.injectProperties}
                                    onChange={this._injectProperty}/>
             </div>);
         case 'nxlog:windows-event-log':
@@ -372,6 +373,7 @@ const EditInputFields = React.createClass({
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
                                      value={verbatim}
+                                     injectProperties={this.props.injectProperties}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'nxlog:udp-syslog':
@@ -409,6 +411,7 @@ const EditInputFields = React.createClass({
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
                                      value={verbatim}
+                                     injectProperties={this.props.injectProperties}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'nxlog:tcp-syslog':
@@ -446,6 +449,7 @@ const EditInputFields = React.createClass({
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
                                      value={verbatim}
+                                     injectProperties={this.props.injectProperties}
                                      onChange={this._injectProperty}/>
               </div>);
         case 'filebeat:file':
