@@ -199,6 +199,7 @@ const EditOutputFields = React.createClass({
                                  onChange={this._changeFields}/>
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
+                                     injectProperties={this.props.injectProperties}
                                      value={this.props.properties.verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
@@ -239,6 +240,7 @@ const EditOutputFields = React.createClass({
               </Input>
 
               <CollapsibleVerbatim type={this.props.type}
+                                   injectProperties={this.props.injectProperties}
                                    value={this.props.properties.verbatim}
                                    onChange={this._injectProperty}/>
             </div>);
@@ -280,6 +282,7 @@ const EditOutputFields = React.createClass({
                                  onChange={this._changeFields}/>
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
+                                     injectProperties={this.props.injectProperties}
                                      value={this.props.properties.verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
@@ -345,6 +348,7 @@ const EditOutputFields = React.createClass({
                                  onChange={this._changeFields}/>
                 </Input>
                 <CollapsibleVerbatim type={this.props.type}
+                                     injectProperties={this.props.injectProperties}
                                      value={this.props.properties.verbatim}
                                      onChange={this._injectProperty}/>
               </div>);
