@@ -115,7 +115,6 @@ const EditOutputFields = React.createClass({
   },
 
   _changeCompression(compression) {
-    console.log("change compression!!!",event.target.id);
     this.setState({compression:compression}, () => {
       this.props.injectProperties("compression", compression);
     });

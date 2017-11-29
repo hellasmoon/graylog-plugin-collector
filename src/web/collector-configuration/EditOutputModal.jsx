@@ -62,6 +62,7 @@ const EditOutputModal = React.createClass({
   },
 
   _save() {
+    console.log("properties: ",this.state.properties);
     const configuration = this.state;
     var errorFields = this.state.errorFields.slice();
     let brokerId=this._getId('gelf-kafka-brokers');
