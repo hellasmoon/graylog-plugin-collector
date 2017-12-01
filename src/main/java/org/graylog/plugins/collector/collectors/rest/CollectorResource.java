@@ -39,6 +39,7 @@ import org.graylog.plugins.collector.collectors.rest.models.responses.CollectorR
 import org.graylog.plugins.collector.collectors.rest.models.responses.CollectorSummary;
 import org.graylog.plugins.collector.permissions.CollectorRestPermissions;
 import org.graylog.plugins.collector.system.CollectorSystemConfiguration;
+import org.graylog2.Configuration;
 import org.graylog2.audit.jersey.AuditEvent;
 import org.graylog2.audit.jersey.NoAuditEvent;
 import org.graylog2.indexer.IndexSet;
@@ -87,15 +88,17 @@ public class CollectorResource extends RestResource implements PluginRestResourc
     private final StreamService streamService;
     private final IndexSetRegistry indexSetRegistry;
     private final StreamRuleService streamRuleService;
+    private final Configuration configuration;
 
     @Inject
-    public CollectorResource(CollectorService collectorService, Supplier<CollectorSystemConfiguration> configSupplier, StreamService streamService, IndexSetRegistry indexSetRegistry, StreamRuleService streamRuleService) {
+    public CollectorResource(CollectorService collectorService, Supplier<CollectorSystemConfiguration> configSupplier, StreamService streamService, IndexSetRegistry indexSetRegistry, StreamRuleService streamRuleService, Configuration configuration) {
         this.collectorService = collectorService;
         this.lostCollectorFunction = new LostCollectorFunction(configSupplier.get().collectorInactiveThreshold());
         this.configSupplier = configSupplier;
         this.streamService = streamService;
         this.indexSetRegistry = indexSetRegistry;
         this.streamRuleService = streamRuleService;
+        this.configuration = configuration;
     }
 
     @GET
@@ -177,40 +180,42 @@ public class CollectorResource extends RestResource implements PluginRestResourc
         final Collector collector = collectorService.fromRequest(collectorId, request, collectorVersion);
         collectorService.save(collector);
 
-        String ip = collector.getNodeDetails().ip();
+        if (!configuration.isAppCenterEnable()){
+            String ip = collector.getNodeDetails().ip();
 
-        List<Stream> streams = streamService.loadByTitle("_IP:"+ip);
+            List<Stream> streams = streamService.loadByTitle("_IP:"+ip);
 
-        if (streams.isEmpty()){
-            ObjectId id = new ObjectId();
+            if (streams.isEmpty()){
+                ObjectId id = new ObjectId();
 
-            if (ip == null){
-                throw new Exception("ip is NULL when registering collector!");
+                if (ip == null){
+                    throw new Exception("ip is NULL when registering collector!");
+                }
+
+                final IndexSet indexSet = indexSetRegistry.getDefault();
+
+                final Map<String, Object> streamData = ImmutableMap.<String, Object>builder()
+                        .put(StreamImpl.FIELD_TITLE, "_IP:"+ip)
+                        .put(StreamImpl.FIELD_DESCRIPTION, ip)
+                        .put(StreamImpl.FIELD_DISABLED, false)
+                        .put(StreamImpl.FIELD_MATCHING_TYPE, StreamImpl.MatchingType.OR.name())
+                        .put(StreamImpl.FIELD_CREATOR_USER_ID, "system")
+                        .put(StreamImpl.FIELD_CREATED_AT, Tools.nowUTC())
+                        .put(StreamImpl.FIELD_DEFAULT_STREAM, false)
+                        .put(StreamImpl.FIELD_INDEX_SET_ID, indexSet.getConfig().id())
+                        .build();
+                final org.graylog2.plugin.streams.Stream stream = new StreamImpl(id, streamData, Collections.emptyList(), Collections.emptySet(), indexSet);
+
+                final String streamId = streamService.save(stream);
+                final Map<String, Object> streamRuleData = ImmutableMap.<String, Object>builder()
+                        .put(StreamRuleImpl.FIELD_TYPE, StreamRuleType.EXACT.getValue())
+                        .put(StreamRuleImpl.FIELD_VALUE, ip)
+                        .put(StreamRuleImpl.FIELD_FIELD, "HOSTIP")
+                        .put(StreamRuleImpl.FIELD_INVERTED, false)
+                        .put(StreamRuleImpl.FIELD_STREAM_ID, new ObjectId(streamId))
+                        .build();
+                streamRuleService.save(new StreamRuleImpl(streamRuleData));
             }
-
-            final IndexSet indexSet = indexSetRegistry.getDefault();
-
-            final Map<String, Object> streamData = ImmutableMap.<String, Object>builder()
-                    .put(StreamImpl.FIELD_TITLE, "_IP:"+ip)
-                    .put(StreamImpl.FIELD_DESCRIPTION, ip)
-                    .put(StreamImpl.FIELD_DISABLED, false)
-                    .put(StreamImpl.FIELD_MATCHING_TYPE, StreamImpl.MatchingType.OR.name())
-                    .put(StreamImpl.FIELD_CREATOR_USER_ID, "system")
-                    .put(StreamImpl.FIELD_CREATED_AT, Tools.nowUTC())
-                    .put(StreamImpl.FIELD_DEFAULT_STREAM, false)
-                    .put(StreamImpl.FIELD_INDEX_SET_ID, indexSet.getConfig().id())
-                    .build();
-            final org.graylog2.plugin.streams.Stream stream = new StreamImpl(id, streamData, Collections.emptyList(), Collections.emptySet(), indexSet);
-
-            final String streamId = streamService.save(stream);
-            final Map<String, Object> streamRuleData = ImmutableMap.<String, Object>builder()
-                    .put(StreamRuleImpl.FIELD_TYPE, StreamRuleType.EXACT.getValue())
-                    .put(StreamRuleImpl.FIELD_VALUE, ip)
-                    .put(StreamRuleImpl.FIELD_FIELD, "HOSTIP")
-                    .put(StreamRuleImpl.FIELD_INVERTED, false)
-                    .put(StreamRuleImpl.FIELD_STREAM_ID, new ObjectId(streamId))
-                    .build();
-            streamRuleService.save(new StreamRuleImpl(streamRuleData));
         }
 
         final CollectorActions collectorActions = collectorService.findActionByCollector(collectorId, true);

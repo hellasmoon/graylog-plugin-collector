@@ -28,6 +28,7 @@ const Group = React.createClass({
       streamRuleTypes: PropTypes.array.isRequired,
       user: PropTypes.object.isRequired,
       indexSets: React.PropTypes.array.isRequired,
+      enableAppCenter: React.PropTypes.bool.isRequired,
     };
   },
   mixins: [PermissionsMixin],
@@ -118,15 +119,19 @@ const Group = React.createClass({
     let manageOutputsLink;
     let manageAlertsLink;
     if (this.isPermitted(permissions, [`streams:edit:${stream.id}`])) {
-      editRulesLink = (
-        <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
-          <ManageGroupItemButton ref="manageGroupItemButton" bsStyle="info"
-                                 onSaveStreamRule={this._onSaveStreamRule}
-                                 onDeleteStreamRule={this._onDeleteStreamRulesByStreamRuleId}
-                                 streamRules={streamRules}
-                                 streamRuleTypes={this.props.streamRuleTypes}/>
-        </OverlayElement>
-      );
+      if (this.props.enableAppCenter){
+        editRulesLink = (undefined);
+      }else {
+        editRulesLink = (
+          <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
+            <ManageGroupItemButton ref="manageGroupItemButton" bsStyle="info"
+                                   onSaveStreamRule={this._onSaveStreamRule}
+                                   onDeleteStreamRule={this._onDeleteStreamRulesByStreamRuleId}
+                                   streamRules={streamRules}
+                                   streamRuleTypes={this.props.streamRuleTypes}/>
+          </OverlayElement>
+        );
+      }
 
       if (this.isPermitted(permissions, ['stream_outputs:read'])) {
         manageOutputsLink = (
@@ -168,17 +173,22 @@ const Group = React.createClass({
                                  stream={stream}
                                  streamRuleTypes={this.props.streamRuleTypes}
                                  permissions={this.props.permissions} />);
-    const streamControls = (
-      <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
-        <GroupControls stream={stream} permissions={this.props.permissions}
-                        user={this.props.user}
-                        onDelete={this._onDelete} onUpdate={this._onUpdate}
-                        onClone={this._onClone}
-                        onQuickAdd={this._onQuickAdd}
-                        indexSets={this.props.indexSets}
-                        isDefaultStream={isDefaultStream} />
-      </OverlayElement>
-    );
+    let streamControls;
+    if (this.props.enableAppCenter){
+      streamControls = (undefined);
+    }else {
+      streamControls = (
+        <OverlayElement overlay={defaultStreamTooltip} placement="top" useOverlay={isDefaultStream}>
+          <GroupControls stream={stream} permissions={this.props.permissions}
+                         user={this.props.user}
+                         onDelete={this._onDelete} onUpdate={this._onUpdate}
+                         onClone={this._onClone}
+                         onQuickAdd={this._onQuickAdd}
+                         indexSets={this.props.indexSets}
+                         isDefaultStream={isDefaultStream} />
+        </OverlayElement>
+      );
+    }
 
     const indexSet = this.props.indexSets.find(is => is.id === stream.index_set_id) || this.props.indexSets.find(is => is.is_default);
     const indexSetDetails = this.isPermitted(permissions, ['indexsets:read']) && indexSet ? <span>index set <em>{indexSet.title}</em> &nbsp;</span> : null;

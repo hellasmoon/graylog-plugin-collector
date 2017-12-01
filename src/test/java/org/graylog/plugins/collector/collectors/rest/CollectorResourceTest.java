@@ -54,11 +54,12 @@ public class CollectorResourceTest extends RestResourceBaseTest {
     private org.graylog2.streams.StreamService streamService;
     private org.graylog2.streams.StreamRuleService streamRuleService;
     private org.graylog2.indexer.IndexSetRegistry indexSetRegistry;
+    private org.graylog2.Configuration configuration;
 
     @Before
     public void setUp() throws Exception {
         this.collectors = getDummyCollectorList();
-        this.resource = new CollectorResource(collectorService, new CollectorSystemConfigurationSupplier(CollectorSystemConfiguration.defaultConfiguration()), streamService, indexSetRegistry, streamRuleService);
+        this.resource = new CollectorResource(collectorService, new CollectorSystemConfigurationSupplier(CollectorSystemConfiguration.defaultConfiguration()), streamService, indexSetRegistry, streamRuleService, configuration);
         when(collectorService.all()).thenReturn(collectors);
     }
 

@@ -27,7 +27,7 @@ const GroupItemList = React.createClass({
         );
       });
     }
-    return <li>This group is empty, try click "Manage group item" button to add some IPs.</li>;
+    return <li>This group is empty, try click "Manage group item" button to add some IPs. Or go to App Center if configured.</li>;
   },
   render() {
     if (this.props.stream) {

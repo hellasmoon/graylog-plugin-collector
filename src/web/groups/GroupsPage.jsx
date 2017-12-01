@@ -15,12 +15,13 @@ import StoreProvider from 'injection/StoreProvider';
 const CurrentUserStore = StoreProvider.getStore('CurrentUser');
 const StreamsStore = StoreProvider.getStore('Streams');
 const IndexSetsStore = StoreProvider.getStore('IndexSets');
+const NodeConfigurationsStore = StoreProvider.getStore('NodeConfigurations');
 
 import ActionsProvider from 'injection/ActionsProvider';
 const IndexSetsActions = ActionsProvider.getActions('IndexSets');
 
 const GroupsPage = React.createClass({
-  mixins: [Reflux.connect(CurrentUserStore), Reflux.connect(IndexSetsStore)],
+  mixins: [Reflux.connect(CurrentUserStore), Reflux.connect(IndexSetsStore), Reflux.connect(NodeConfigurationsStore)],
   getInitialState() {
     return {
       indexSets: undefined,
@@ -30,7 +31,7 @@ const GroupsPage = React.createClass({
     IndexSetsActions.list(false);
   },
   _isLoading() {
-    return !this.state.currentUser || !this.state.indexSets;
+    return !this.state.currentUser || !this.state.indexSets || !this.state.configuration;
   },
   _onSave(_, stream) {
     StreamsStore.save(stream, (response) => {
@@ -42,6 +43,19 @@ const GroupsPage = React.createClass({
   render() {
     if (this._isLoading()) {
       return <Spinner />;
+    }
+
+    let createGroupButton;
+
+    if (!this.state.configuration.enable_app_center){
+      createGroupButton = (
+        <IfPermitted permissions="streams:create">
+          <CreateGroupButton ref="createStreamButton" bsSize="large" bsStyle="success" onSave={this._onSave}
+                             indexSets={this.state.indexSets} />
+        </IfPermitted>
+      );
+    }else {
+      createGroupButton = (undefined);
     }
 
     return (
@@ -57,16 +71,13 @@ const GroupsPage = React.createClass({
               Read more about groups in the <DocumentationLink page={DocsHelper.PAGES.STREAMS} text="documentation" />.
             </span>
 
-            <IfPermitted permissions="streams:create">
-              <CreateGroupButton ref="createStreamButton" bsSize="large" bsStyle="success" onSave={this._onSave}
-                                  indexSets={this.state.indexSets} />
-            </IfPermitted>
+            {createGroupButton}
           </PageHeader>
 
           <Row className="content">
             <Col md={12}>
               <GroupComponent currentUser={this.state.currentUser} onStreamSave={this._onSave}
-                               indexSets={this.state.indexSets} />
+                               indexSets={this.state.indexSets} enableAppCenter={this.state.configuration.enable_app_center} />
             </Col>
           </Row>
         </div>

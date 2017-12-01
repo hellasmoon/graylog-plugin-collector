@@ -17,6 +17,7 @@ const GroupComponent = React.createClass({
     currentUser: React.PropTypes.object.isRequired,
     onStreamSave: React.PropTypes.func.isRequired,
     indexSets: React.PropTypes.array.isRequired,
+    enableAppCenter: React.PropTypes.bool.isRequired,
   },
   getInitialState() {
     return {};
@@ -79,7 +80,7 @@ const GroupComponent = React.createClass({
       );
     }
 
-    if (this.state.streams.length === 0) {
+    if (this.state.streams.length === 0 && !this.props.enableAppCenter) {
       const createStreamButton = (
         <IfPermitted permissions="streams:create">
           <CreateGroupButton bsSize="small" bsStyle="link" className="btn-text"
@@ -98,7 +99,7 @@ const GroupComponent = React.createClass({
 
     const streamsList = this.state.filteredStreams ? (<GroupList streams={this.state.filteredStreams} streamRuleTypes={this.state.streamRuleTypes}
                                                                   permissions={this.props.currentUser.permissions} user={this.props.currentUser}
-                                                                  onStreamSave={this.props.onStreamSave} indexSets={this.props.indexSets} />) : <Spinner />;
+                                                                  onStreamSave={this.props.onStreamSave} indexSets={this.props.indexSets} enableAppCenter={this.props.enableAppCenter} />) : <Spinner />;
 
     return (
       <div>

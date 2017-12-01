@@ -12,6 +12,7 @@ const GroupList = React.createClass({
     user: React.PropTypes.object.isRequired,
     permissions: React.PropTypes.array.isRequired,
     onStreamSave: React.PropTypes.func.isRequired,
+    enableAppCenter: React.PropTypes.bool.isRequired,
   },
   mixins: [PermissionsMixin],
 
@@ -24,7 +25,7 @@ const GroupList = React.createClass({
       stream.title_shadow = stream.title.substr(7);
       return (
         <Group key={`stream-${stream.id}`} stream={stream} streamRuleTypes={this.props.streamRuleTypes}
-               permissions={this.props.permissions} user={this.props.user} indexSets={this.props.indexSets} />
+               permissions={this.props.permissions} user={this.props.user} indexSets={this.props.indexSets} enableAppCenter={this.props.enableAppCenter} />
       );
     }
   },
