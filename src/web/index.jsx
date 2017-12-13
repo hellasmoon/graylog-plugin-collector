@@ -24,7 +24,7 @@ const manifest = new PluginManifest(packageJson, {
 
   systemnavigation: [
     { path: '/system/collectors', description: 'Collectors', permissions: 'collectors:read' },
-    { path: '/system/groups', description: 'groups', permissions: 'collectors:read' },
+    { path: '/system/groups', description: 'Groups', permissions: 'collectors:read' },
   ],
 
   systemConfigurations: [
